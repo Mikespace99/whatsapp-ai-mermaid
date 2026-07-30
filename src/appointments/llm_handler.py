@@ -50,11 +50,30 @@ Restituisci SOLO un oggetto JSON valido (nessun testo aggiuntivo) con questa str
   }
 }
 
-Regole:
-- intent = BOOKING se l'utente vuole prenotare, fissare, prendere un appuntamento
-- intent = INFO se chiede informazioni su servizi, orari, prezzi
-- intent = ALTRO in tutti gli altri casi
-- date_preference: mantieni il testo originale ("domani", "lunedì", "15 agosto", ecc.)
+Regole IMPORTANTI per classificare l'intent:
+
+BOOKING → usa questa categoria in modo GENEROSO per qualsiasi messaggio che indica
+  il desiderio di prenotare, fissare, prendere, avere, volere un appuntamento,
+  o che chiede disponibilità/quando è possibile venire/orari liberi.
+  Esempi BOOKING:
+  - "vorrei prenotare", "voglio un appuntamento", "fissare visita"
+  - "quando posso venire?", "quando sarebbe possibile?", "avete disponibilità?"
+  - "c'è posto domani?", "quando siete liberi?", "vorrei venire la prossima settimana"
+  - "ho bisogno di una visita", "devo prendere appuntamento", "posso prenotare?"
+  - "visita dal dottore", "appuntamento col medico", "controllo", "consulenza"
+
+INFO → SOLO se chiede esplicitamente prezzi, costi, quanto costa, lista servizi offerti.
+  Esempi INFO:
+  - "quanto costa una visita?", "che servizi offrite?", "quali sono i prezzi?"
+
+ALTRO → saluti, ringraziamenti, messaggi non pertinenti.
+  Esempi ALTRO:
+  - "ciao", "grazie", "arrivederci", "ok"
+
+IMPORTANTE: Se c'è anche solo un minimo dubbio tra BOOKING e INFO, scegli BOOKING.
+
+Per le entities:
+- date_preference: mantieni il testo originale ("domani", "lunedì", "15 agosto", "quando possibile")
 - time_preference: mantieni il testo originale ("10:00", "mattina", "nel pomeriggio")
 - Non inventare dati non presenti nel messaggio (usa null)
 """
