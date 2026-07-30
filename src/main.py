@@ -98,6 +98,12 @@ app.include_router(webhook_router)
 # ── Health check ──────────────────────────────────────────────────────────
 
 
+@app.get("/", tags=["system"])
+def root() -> dict[str, str]:
+    """Root endpoint – richiesto da Render per l'health check."""
+    return {"status": "ok", "service": "whatsapp-booking"}
+
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Health check endpoint.
@@ -235,3 +241,30 @@ def force_send_reminders() -> dict[str, str]:
     send_pending_reminders()
     logger.info("Reminder forzato via endpoint admin.")
     return {"status": "ok", "message": "Job reminder eseguito."}
+
+
+@app.get("/admin/test-whatsapp", tags=["admin"])
+def test_whatsapp_connection(
+    to: str = Query(..., description="Numero destinatario E.164, es. +39123456789"),
+) -> dict[str, str]:
+    """Invia un messaggio WhatsApp di test per verificare la connessione API.
+
+    Args:
+        to: Numero destinatario in formato E.164.
+
+    Returns:
+        message_id restituito da Meta se OK, oppure dettaglio errore.
+    """
+    from src.whatsapp.client import whatsapp_client
+
+    try:
+        result = whatsapp_client.send_text(
+            phone_number=to,
+            text="✅ Test connessione WhatsApp OK! Il sistema di prenotazione è attivo.",
+        )
+        msg_id = result.get("messages", [{}])[0].get("id", "n/a")
+        logger.info("Test WhatsApp OK: message_id=%s → %s***", msg_id, to[:4])
+        return {"status": "ok", "message_id": msg_id, "to": to}
+    except Exception as exc:
+        logger.error("Test WhatsApp fallito: %s", exc)
+        return {"status": "error", "detail": str(exc)}
