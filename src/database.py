@@ -13,18 +13,31 @@ from src.config import settings
 
 logger = logging.getLogger(__name__)
 
+# ── Fix URL: Supabase usa postgres:// ma SQLAlchemy 2.0 richiede postgresql:// ──
+_db_url = settings.DATABASE_URL
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql://", 1)
+    logger.info("DATABASE_URL: prefisso corretto postgres:// → postgresql://")
+
 # ── Engine ────────────────────────────────────────────────────────────────
 
 _connect_args: dict = {}
-if "sqlite" in settings.DATABASE_URL:
-    # SQLite richiede check_same_thread=False per uso in FastAPI
+if "sqlite" in _db_url:
     _connect_args = {"check_same_thread": False}
 
-engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args=_connect_args,
-    echo=False,  # Impostare True in dev per vedere le query SQL
-)
+_engine_kwargs: dict = {
+    "connect_args": _connect_args,
+    "pool_pre_ping": True,   # verifica connessione prima di usarla (Supabase chiude idle)
+    "echo": False,
+}
+
+# PostgreSQL: limita il pool per il piano free di Supabase (max 15 connessioni)
+if "postgresql" in _db_url:
+    _engine_kwargs["pool_size"] = 5
+    _engine_kwargs["max_overflow"] = 2
+    _engine_kwargs["pool_recycle"] = 300  # ricicla connessioni ogni 5 minuti
+
+engine = create_engine(_db_url, **_engine_kwargs)
 
 # Abilita foreign keys su SQLite
 if "sqlite" in settings.DATABASE_URL:
