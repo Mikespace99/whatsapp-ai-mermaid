@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: whatsapp-booking
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false          # Lo inserisci manualmente nel dashboard Render
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_BUSINESS_ACCOUNT_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_API_VERSION
+        value: v18.0
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: SEARCH_DAYS
+        value: "30"
+      - key: REPLY_TIMEOUT_MINUTES
+        value: "10"
+      - key: MAX_PROPOSAL_CYCLES
+        value: "2"
+      - key: FIRST_OFFER_SLOTS
+        value: "3"
+      - key: REMINDER_HOURS_BEFORE
+        value: "24"
+      - key: REMINDER_CHECK_INTERVAL_MINUTES
+        value: "10"
+      - key: EXPIRY_CHECK_INTERVAL_SECONDS
+        value: "60"

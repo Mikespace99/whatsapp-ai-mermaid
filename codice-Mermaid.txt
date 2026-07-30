@@ -1,0 +1,128 @@
+flowchart TD
+
+CONFIG["STUDIO CONFIGURATION<br/>search_days: 30<br/>reply_timeout: 10 min<br/>max_cycles: 2<br/>first_offer_slots: 3"]
+
+CTX["CONVERSATION CONTEXT<br/>intent<br/>state<br/>preferences<br/>proposed_slots<br/>rejected_slots<br/>selected_slot<br/>proposal_cycle"]
+
+START([START])
+
+MSG["Ricezione messaggio WhatsApp"]
+
+TIME["Salva timestamp<br/>data e ora messaggio"]
+
+LLM["LLM Intent + Entity Extraction<br/>estrae:<br/>intent, data, ora, periodo,<br/>servizio, nome"]
+
+INTENT{"Intent?"}
+
+INFO["Flusso INFO"]
+
+OTHER["Flusso ALTRO"]
+
+CHRONO["Chrono<br/>normalizzazione date"]
+
+UPDATE["Aggiorna Context"]
+
+LIMIT{"Data entro limite configurato?"}
+
+LIMITNO["Risposta:<br/>prenotazione oltre limite"]
+
+CALENDAR["Calendar Search<br/>usa preferenze disponibili"]
+
+RULES["Business Rules Engine<br/>durata servizio<br/>orari apertura<br/>esclusioni<br/>ordinamento"]
+
+RESULT["Aggiorna Context<br/>salva risultati ricerca"]
+
+FOUND{"Slot trovati?"}
+
+NOSLOT["Invita a contattare studio"]
+
+OFFER["Mostra primi 3 slot"]
+
+WAIT["WAITING_REPLY<br/>timer 10 minuti"]
+
+REPLY{"Risposta ricevuta?"}
+
+EXPIRE["Conversazione scaduta"]
+
+INTERPRET["LLM interpreta risposta"]
+
+CHOICE{"Tipo risposta?"}
+
+ACCEPT["Accetta slot"]
+
+VERIFY{"Verifica slot ancora libero"}
+
+CREATE["Crea appuntamento"]
+
+CONFIRM["Conferma prenotazione"]
+
+REJECT["Salva slot rifiutati"]
+
+CYCLE["Incrementa ciclo"]
+
+MAX{"Ciclo massimo raggiunto?"}
+
+AGAIN["Nuova ricerca<br/>escludendo slot rifiutati"]
+
+PREF["Aggiorna nuove preferenze"]
+
+
+START --> MSG
+MSG --> TIME
+TIME --> LLM
+LLM --> INTENT
+
+INTENT -->|BOOKING| CHRONO
+INTENT -->|INFO| INFO
+INTENT -->|ALTRO| OTHER
+
+CHRONO --> UPDATE
+UPDATE --> LIMIT
+
+LIMIT -->|NO| LIMITNO
+LIMIT -->|SI| CALENDAR
+
+CALENDAR --> RULES
+RULES --> RESULT
+RESULT --> FOUND
+
+FOUND -->|NO| NOSLOT
+FOUND -->|SI| OFFER
+
+OFFER --> WAIT
+WAIT --> REPLY
+
+REPLY -->|NO| EXPIRE
+REPLY -->|SI| INTERPRET
+
+INTERPRET --> CHOICE
+
+CHOICE -->|ACCETTA| ACCEPT
+CHOICE -->|RIFIUTA| REJECT
+CHOICE -->|NUOVE PREFERENZE| PREF
+
+ACCEPT --> VERIFY
+VERIFY -->|SI| CREATE
+VERIFY -->|NO| AGAIN
+
+CREATE --> CONFIRM
+
+REJECT --> CYCLE
+CYCLE --> MAX
+
+MAX -->|SI| NOSLOT
+MAX -->|NO| AGAIN
+
+AGAIN --> CALENDAR
+PREF --> CHRONO
+
+
+CTX -.-> LLM
+CTX -.-> CALENDAR
+CTX -.-> RULES
+CTX -.-> INTERPRET
+
+CONFIG -.-> RULES
+CONFIG -.-> WAIT
+CONFIG -.-> LIMIT
+CONFIG -.-> MAX
